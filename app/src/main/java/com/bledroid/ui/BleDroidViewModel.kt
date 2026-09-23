@@ -11,6 +11,7 @@ import com.bledroid.engine.BleAdvertiserEngine
 import com.bledroid.generators.*
 import com.bledroid.models.AdvertisementSet
 import com.bledroid.models.SpamType
+import android.widget.Toast
 import com.bledroid.service.SpamForegroundService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,6 +20,10 @@ import kotlinx.coroutines.launch
 
 enum class ThemeColor {
     DYNAMIC, DEFAULT, BLUE, RED, GREEN, PURPLE
+}
+
+enum class ThemeMode {
+    SYSTEM, LIGHT, DARK
 }
 
 class BleDroidViewModel(application: Application) : AndroidViewModel(application) {
@@ -100,6 +105,14 @@ class BleDroidViewModel(application: Application) : AndroidViewModel(application
     private val _useOledTheme = MutableStateFlow(prefs.getBoolean("useOledTheme", false))
     val useOledTheme = _useOledTheme.asStateFlow()
 
+    private val _themeMode = MutableStateFlow(
+        runCatching { ThemeMode.valueOf(prefs.getString("themeMode", "SYSTEM") ?: "SYSTEM") }.getOrDefault(ThemeMode.SYSTEM)
+    )
+    val themeMode = _themeMode.asStateFlow()
+
+    private val _keepScreenOn = MutableStateFlow(prefs.getBoolean("keepScreenOn", false))
+    val keepScreenOn = _keepScreenOn.asStateFlow()
+
     private val _isControlBarExpanded = MutableStateFlow(true)
     val isControlBarExpanded = _isControlBarExpanded.asStateFlow()
 
@@ -141,6 +154,16 @@ class BleDroidViewModel(application: Application) : AndroidViewModel(application
         prefs.edit { putBoolean("useOledTheme", use) }
     }
 
+    fun setThemeMode(mode: ThemeMode) {
+        _themeMode.value = mode
+        prefs.edit { putString("themeMode", mode.name) }
+    }
+
+    fun setKeepScreenOn(use: Boolean) {
+        _keepScreenOn.value = use
+        prefs.edit { putBoolean("keepScreenOn", use) }
+    }
+
     fun setControlBarExpanded(expanded: Boolean) {
         _isControlBarExpanded.value = expanded
     }
@@ -174,7 +197,20 @@ class BleDroidViewModel(application: Application) : AndroidViewModel(application
 
     fun startSpam(type: SpamType) {
         val sets = getFlowForType(type).value
-        engine.start(sets)
+        val ctx = getApplication<Application>()
+
+        if (sets.none { it.isSelected }) {
+            toast(ctx, "No devices selected")
+            return
+        }
+        if (!engine.isBluetoothEnabled()) {
+            toast(ctx, "Bluetooth is disabled")
+            return
+        }
+        if (!engine.start(sets)) {
+            toast(ctx, "Failed to start advertising")
+            return
+        }
         _activeSpamType.value = type
 
         val route = when (type) {
@@ -186,7 +222,6 @@ class BleDroidViewModel(application: Application) : AndroidViewModel(application
             SpamType.MIXED_ALL -> com.bledroid.ui.navigation.Routes.MIX_ALL
         }
 
-        val ctx = getApplication<Application>()
         if (_useForegroundService.value) {
             ctx.startForegroundService(
                 Intent(ctx, SpamForegroundService::class.java).apply {
@@ -222,8 +257,22 @@ class BleDroidViewModel(application: Application) : AndroidViewModel(application
     }
 
     // --- Spam Radar ---
-    fun startRadar() = engine.startScan()
+    fun startRadar() {
+        val ctx = getApplication<Application>()
+        if (!engine.isBluetoothEnabled()) {
+            toast(ctx, "Bluetooth is disabled")
+            return
+        }
+        if (!engine.startScan()) {
+            toast(ctx, "Scan permission denied or scanner unavailable")
+        }
+    }
+
     fun stopRadar() = engine.stopScan()
+
+    private fun toast(ctx: android.content.Context, message: String) {
+        Toast.makeText(ctx, message, Toast.LENGTH_SHORT).show()
+    }
 
     private fun getFlowForType(type: SpamType): MutableStateFlow<MutableList<AdvertisementSet>> {
         return when (type) {

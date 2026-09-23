@@ -13,6 +13,7 @@ import androidx.activity.viewModels
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -34,6 +35,7 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import com.bledroid.ui.BleDroidViewModel
+import com.bledroid.ui.ThemeMode
 import com.bledroid.ui.navigation.Routes
 import com.bledroid.ui.screens.*
 import com.bledroid.ui.theme.BleDroidTheme
@@ -84,8 +86,27 @@ class MainActivity : ComponentActivity() {
         setContent {
             val themeColor by viewModel.themeColor.collectAsState()
             val useOled by viewModel.useOledTheme.collectAsState()
+            val themeMode by viewModel.themeMode.collectAsState()
+            val keepScreenOn by viewModel.keepScreenOn.collectAsState()
+            val isSpamRunning by viewModel.engine.isRunning.collectAsState()
             val initialRoute = intent?.getStringExtra(com.bledroid.service.SpamForegroundService.EXTRA_ROUTE)
-            BleDroidTheme(themeColor = themeColor, useOled = useOled) {
+
+            val systemDark = isSystemInDarkTheme()
+            val darkTheme = when (themeMode) {
+                ThemeMode.SYSTEM -> systemDark
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+            }
+
+            LaunchedEffect(keepScreenOn, isSpamRunning) {
+                if (keepScreenOn && isSpamRunning) {
+                    window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                } else {
+                    window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                }
+            }
+
+            BleDroidTheme(themeColor = themeColor, darkTheme = darkTheme, useOled = useOled) {
                 BleDroidMainHost(viewModel = viewModel, initialRoute = initialRoute)
             }
         }
@@ -110,6 +131,11 @@ class MainActivity : ComponentActivity() {
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             perms.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) {
+            // BLE scan requires location on API <= 30
+            perms.add(Manifest.permission.ACCESS_FINE_LOCATION)
+            perms.add(Manifest.permission.ACCESS_COARSE_LOCATION)
         }
         val missing = perms.filter {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED

@@ -43,6 +43,10 @@ fun CustomBleScreen(viewModel: BleDroidViewModel) {
 
     fun buildAndStart() {
         errorMsg = null
+        if (!viewModel.engine.isBluetoothEnabled()) {
+            errorMsg = "Bluetooth is disabled"
+            return
+        }
         try {
             val adSet = if (useServiceData) {
                 val uuid = android.os.ParcelUuid.fromString(serviceUuidHex.trim())
@@ -64,7 +68,9 @@ fun CustomBleScreen(viewModel: BleDroidViewModel) {
                     manufacturerData = ManufacturerData(mfId, data),
                 )
             }
-            viewModel.engine.start(listOf(adSet))
+            if (!viewModel.engine.start(listOf(adSet))) {
+                errorMsg = "Failed to start advertising"
+            }
         } catch (e: Exception) {
             errorMsg = "Error: ${e.message}"
         }

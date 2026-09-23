@@ -17,6 +17,7 @@ import androidx.compose.animation.*
 import androidx.compose.ui.unit.dp
 import com.bledroid.ui.BleDroidViewModel
 import com.bledroid.ui.ThemeColor
+import com.bledroid.ui.ThemeMode
 
 @Composable
 fun SettingsGroupItem(
@@ -90,6 +91,8 @@ fun SettingsScreen(
     val useForeground by viewModel.useForegroundService.collectAsState()
     val themeColor by viewModel.themeColor.collectAsState()
     val useOled by viewModel.useOledTheme.collectAsState()
+    val themeMode by viewModel.themeMode.collectAsState()
+    val keepScreenOn by viewModel.keepScreenOn.collectAsState()
 
     val showCustomInterval by viewModel.showCustomInterval.collectAsState()
     // Do NOT use remember(intervalMs) — that resets the field on every value change!
@@ -221,8 +224,47 @@ fun SettingsScreen(
             )
 
             SettingsGroupItem(
+                title = "Keep Screen On",
+                subtitle = "Prevent sleep while spam is running",
+                isFirst = false,
+                isLast = true,
+                onClick = { viewModel.setKeepScreenOn(!keepScreenOn) },
+                trailing = {
+                    Switch(
+                        checked = keepScreenOn,
+                        onCheckedChange = { viewModel.setKeepScreenOn(it) },
+                    )
+                }
+            )
+
+            SettingsGroupHeader("Appearance")
+
+            SettingsGroupItem(
+                title = "Theme Mode",
+                subtitle = "Force light/dark or follow the system",
+                isFirst = true,
+                isLast = false,
+                bottomContent = {
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                        val options = listOf(
+                            ThemeMode.SYSTEM to "System",
+                            ThemeMode.LIGHT to "Light",
+                            ThemeMode.DARK to "Dark",
+                        )
+                        options.forEachIndexed { i, (mode, label) ->
+                            SegmentedButton(
+                                selected = themeMode == mode,
+                                onClick = { viewModel.setThemeMode(mode) },
+                                shape = SegmentedButtonDefaults.itemShape(i, options.size),
+                            ) { Text(label, style = MaterialTheme.typography.labelSmall) }
+                        }
+                    }
+                }
+            )
+
+            SettingsGroupItem(
                 title = "OLED Pure Black Theme",
-                subtitle = "Uses absolute black instead of dark grey for the background. Only active when device is in Dark Mode.",
+                subtitle = "Uses absolute black instead of dark grey for the background. Only active in dark mode.",
                 isFirst = false,
                 isLast = false,
                 onClick = { viewModel.setUseOledTheme(!useOled) },
