@@ -54,8 +54,8 @@ object SpamClassifier {
                     76 -> { // Apple 0x004C
                         if (data != null && data.isNotEmpty()) {
                             return when (data[0].toInt() and 0xFF) {
-                                0x07 -> "Apple Action Modal"
-                                0x05, 0x07, 0x09, 0x10 -> "Apple Device Popup"
+                                0x0F -> "Apple Action Modal"
+                                0x05, 0x07, 0x08, 0x09, 0x10 -> "Apple Device Popup"
                                 else -> "Apple Continuity"
                             }
                         }
@@ -127,21 +127,22 @@ class BleAdvertiserEngine(private val context: Context) {
 
     fun isBluetoothEnabled(): Boolean = bluetoothAdapter?.isEnabled == true
 
-    fun start(advertisementSets: List<AdvertisementSet>) {
-        if (_isRunning.value) return
+    fun start(advertisementSets: List<AdvertisementSet>): Boolean {
+        if (_isRunning.value) return false
+        if (bluetoothAdapter?.isEnabled != true) {
+            Log.e(tag, "Bluetooth is disabled")
+            return false
+        }
         val adv = advertiser ?: run {
             Log.e(tag, "BLE Advertiser not available")
-            return
+            return false
         }
+
+        val selectedSets = advertisementSets.filter { it.isSelected }
+        if (selectedSets.isEmpty()) return false
 
         _isRunning.value = true
         _packetsSent.value = 0
-
-        val selectedSets = advertisementSets.filter { it.isSelected }
-        if (selectedSets.isEmpty()) {
-            _isRunning.value = false
-            return
-        }
 
         spamJob = scope.launch {
             while (isActive && _isRunning.value) {
@@ -162,6 +163,7 @@ class BleAdvertiserEngine(private val context: Context) {
                 }
             }
         }
+        return true
     }
 
     fun stop() {
@@ -176,11 +178,15 @@ class BleAdvertiserEngine(private val context: Context) {
 
     // --- Spam Radar Scanner ---
 
-    fun startScan() {
-        if (_isScanning.value) return
+    fun startScan(): Boolean {
+        if (_isScanning.value) return true
+        if (bluetoothAdapter?.isEnabled != true) {
+            Log.e(tag, "Bluetooth is disabled")
+            return false
+        }
         val sc = scanner ?: run {
             Log.e(tag, "BLE Scanner not available")
-            return
+            return false
         }
 
         _isScanning.value = true
@@ -225,7 +231,10 @@ class BleAdvertiserEngine(private val context: Context) {
         } catch (e: SecurityException) {
             Log.e(tag, "Scan permission denied: ${e.message}")
             _isScanning.value = false
+            scanCallback = null
+            return false
         }
+        return true
     }
 
     fun stopScan() {

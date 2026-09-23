@@ -43,6 +43,8 @@ fun DashboardScreen(
     val swiftPairSets by viewModel.swiftPairSets.collectAsState()
     val lovespouseSets by viewModel.lovespouseSets.collectAsState()
     val mixAllSets by viewModel.mixAllSets.collectAsState()
+    val isScanning by viewModel.engine.isScanning.collectAsState()
+    val radarResults by viewModel.engine.scanResults.collectAsState()
 
     Scaffold(
         topBar = {
@@ -215,10 +217,11 @@ fun DashboardScreen(
 
             SpamCategoryCard(
                 title = "Spam Radar",
-                subtitle = "Detect & classify incoming BLE spam nearby",
+                subtitle = if (isScanning) "Scanning — ${radarResults.size} devices detected"
+                else "Detect & classify incoming BLE spam nearby",
                 icon = Icons.Default.Sensors,
-                deviceCount = 0,
-                isActive = false,
+                deviceCount = radarResults.size,
+                isActive = isScanning,
                 onClick = onNavigateToSpamRadar,
             )
 

@@ -129,7 +129,6 @@ class FastPairGenerator : SpamGenerator {
         "DEE8C0" to "Ear (2)",
         "9CE3C7" to "EDIFIER NeoBuds Pro 2",
         "994374" to "EDIFIER W320TN",
-        "C7A267" to "Fake Test Mouse",
         "5CEE3C" to "Fitbit Charge 4",
         "915CFA" to "Galaxy A14",
         "89BAD5" to "Galaxy A23 5G",
