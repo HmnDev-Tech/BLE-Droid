@@ -1,5 +1,14 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Questions and discussion
-    url: https://github.com/HmnDev-Tech/BLE-Droid/discussions
-    about: Usage questions and general discussion — not bug reports.
+  - name: Question or "how do I..."
+    url: https://github.com/HmnDev-Tech/BLE-Droid/discussions/categories/q-a
+    about: Usage help and setup questions — answered in Discussions, not issues.
+  - name: Idea or proposal
+    url: https://github.com/HmnDev-Tech/BLE-Droid/discussions/categories/ideas
+    about: Rough ideas that are not yet concrete enough for a feature request.
+  - name: Show your setup or result
+    url: https://github.com/HmnDev-Tech/BLE-Droid/discussions/categories/show-and-tell
+    about: Screenshots, device setups, results of authorized testing.
+  - name: Wiki
+    url: https://github.com/HmnDev-Tech/BLE-Droid/wiki
+    about: Building, signing, permissions, troubleshooting — read before filing an issue.

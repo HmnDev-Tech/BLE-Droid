@@ -1,12 +1,22 @@
 name: Bug report
-description: Report a reproducible bug
+description: Report a reproducible bug in BLE advertising, scanning, or the UI
+title: "[Bug]: "
 labels: ["bug"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Read the [Wiki](https://github.com/HmnDev-Tech/BLE-Droid/wiki) and search
+        [existing issues](https://github.com/HmnDev-Tech/BLE-Droid/issues) first.
+        One bug per issue. Issues missing reproduction steps or device data get closed.
   - type: textarea
     id: what-happened
     attributes:
       label: What happened
-      description: Actual behavior vs expected behavior.
+      description: Actual behavior vs expected behavior. Be specific about which protocol/tool was involved.
+      placeholder: |
+        Actual: tapping START shows "advertiser failed" and no packets go out.
+        Expected: advertisements broadcast and the counter increases.
     validations:
       required: true
   - type: textarea
@@ -14,27 +24,83 @@ body:
     attributes:
       label: Steps to reproduce
       placeholder: |
-        1. Open ...
-        2. Tap ...
-        3. See ...
+        1. Open Fast Pair
+        2. Select all devices
+        3. Tap START
+        4. See ...
     validations:
       required: true
   - type: input
     id: device
     attributes:
-      label: Device and Android version
-      placeholder: "e.g. Pixel 7, Android 14"
+      label: Device
+      description: Manufacturer and model. Note if the vendor is known to restrict BLE advertising (Xiaomi, Samsung, Huawei...).
+      placeholder: "e.g. Pixel 7, Xiaomi Redmi Note 12"
+    validations:
+      required: true
+  - type: input
+    id: android-version
+    attributes:
+      label: Android version
+      placeholder: "e.g. Android 14 (API 34)"
     validations:
       required: true
   - type: input
     id: version
     attributes:
-      label: App version
-      placeholder: "e.g. 1.5.0 (or CI artifact run URL)"
+      label: App version / build
+      description: From Settings, or the CI run URL if installed from an artifact.
+      placeholder: "e.g. 1.5.0 (versionCode 2), CI run https://github.com/.../actions/runs/12345"
     validations:
       required: true
+  - type: dropdown
+    id: install-source
+    attributes:
+      label: Install source
+      options:
+        - CI artifact (GitHub Actions)
+        - Locally built debug APK
+        - Locally built release APK
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: permissions
+    attributes:
+      label: Runtime permissions
+      description: BLE scan on Android 6-11 requires Location; Android 12+ requires Nearby devices.
+      options:
+        - label: Bluetooth permission granted
+          required: true
+        - label: Location permission granted (only if on Android 11 or lower)
+        - label: Notifications permission granted (Android 13+, only if foreground service is involved)
+  - type: checkboxes
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - label: Bluetooth is ON and BLE is confirmed working on this device (e.g. another BLE app scans fine)
+          required: true
+        - label: The issue also happens after restarting the app
+        - label: I tested both the affected protocol and an unrelated one to narrow the scope
   - type: textarea
     id: logs
     attributes:
       label: Logs / screenshots
-      description: Logcat lines or screen recordings. Sanitize nothing else — no personal data.
+      description: |
+        Logcat lines, screen recordings, screenshots. Filter with `adb logcat -s BluetoothLeScanner`,
+        `BleAdvertiserEngine`, `SpamForegroundService`. Strip MAC addresses if you care about them —
+        nothing else needs stripping.
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues and this is not a duplicate
+          required: true
+        - label: This is one bug only, not a bundle of unrelated problems
+          required: true
+        - label: This report does not ask to bypass Android security or permissions
+          required: true

@@ -1,0 +1,31 @@
+name: Q&A
+description: Ask a usage or setup question
+title: "[Q]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Bugs go to [Issues](https://github.com/HmnDev-Tech/BLE-Droid/issues/new/choose),
+        not here. Search [existing discussions](https://github.com/HmnDev-Tech/BLE-Droid/discussions) first.
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What are you trying to do, and where are you stuck?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: What you already tried
+      description: Links to Wiki pages you read, settings you changed, errors you hit.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Device / Android version / app version
+      placeholder: "e.g. Pixel 7, Android 14, app 1.5.0"
+    validations:
+      required: true

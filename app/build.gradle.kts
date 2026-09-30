@@ -16,11 +16,12 @@ android {
         versionName = "1.5.0"
     }
 
+    val sharedSigning = System.getenv("KEYSTORE_PATH") != null
+
     signingConfigs {
-        create("release") {
-            val ksPath = System.getenv("KEYSTORE_PATH")
-            if (ksPath != null) {
-                storeFile = file(ksPath)
+        create("shared") {
+            if (sharedSigning) {
+                storeFile = file(System.getenv("KEYSTORE_PATH")!!)
                 storePassword = System.getenv("KEYSTORE_PASSWORD")
                 keyAlias = System.getenv("KEY_ALIAS")
                 keyPassword = System.getenv("KEY_PASSWORD")
@@ -35,14 +36,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = if (System.getenv("KEYSTORE_PATH") != null) {
-                signingConfigs.getByName("release")
-            } else {
-                null
-            }
+            signingConfig = if (sharedSigning) signingConfigs.getByName("shared") else null
         }
         debug {
             applicationIdSuffix = ".debug"
+            if (sharedSigning) {
+                signingConfig = signingConfigs.getByName("shared")
+            }
         }
     }
 

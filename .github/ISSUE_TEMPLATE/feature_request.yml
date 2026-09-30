@@ -1,19 +1,49 @@
 name: Feature request
 description: Propose a concrete feature or improvement
+title: "[Feature]: "
 labels: ["enhancement"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Usage questions and "how do I..." go to
+        [Discussions](https://github.com/HmnDev-Tech/BLE-Droid/discussions), not issues.
+        Search [existing issues](https://github.com/HmnDev-Tech/BLE-Droid/issues) first.
   - type: textarea
     id: problem
     attributes:
       label: Problem or use case
       description: What real workflow is missing. No vague "add more stuff".
+      placeholder: "I need to replay a captured advertisement to test my own device's filter, currently I have to retype the hex every time."
     validations:
       required: true
   - type: textarea
     id: proposal
     attributes:
       label: Proposed behavior
-      description: How it should work, concretely.
+      description: How it should work, concretely — screens, buttons, settings, data shown.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds you use today, or other apps/approaches that do this.
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Advertising / spam protocols
+        - Spam Radar / scanning
+        - Custom BLE editor
+        - UI / theme / settings
+        - Performance or battery
+        - Build / CI / packaging
+        - Documentation
+        - Other
     validations:
       required: true
   - type: checkboxes
@@ -24,4 +54,6 @@ body:
         - label: I searched existing issues and this is not a duplicate
           required: true
         - label: This request does not ask to remove or bypass security/permissions
+          required: true
+        - label: I have described a workflow, not just a feature name
           required: true

@@ -31,37 +31,52 @@ jobs:
           KEY_PASS: ${{ secrets.KEY_PASSWORD }}
         run: |
           if [ -n "$KEYSTORE_B64" ]; then
-            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/shared.jks"
             {
-              echo "KEYSTORE_PATH=$RUNNER_TEMP/release.jks"
+              echo "KEYSTORE_PATH=$RUNNER_TEMP/shared.jks"
               echo "KEYSTORE_PASSWORD=$KS_PASS"
               echo "KEY_ALIAS=$KEY_ALIAS"
               echo "KEY_PASSWORD=$KEY_PASS"
             } >> "$GITHUB_ENV"
           else
-            keytool -genkeypair -keystore "$RUNNER_TEMP/release.jks" \
+            echo "::warning::KEYSTORE_B64 secret is not set - signing with a throwaway key. Artifacts from this run will NOT be updatable by future runs. Set KEYSTORE_B64/KEYSTORE_PASSWORD/KEY_ALIAS/KEY_PASSWORD secrets for a stable signature."
+            keytool -genkeypair -keystore "$RUNNER_TEMP/shared.jks" \
               -storepass bledroid -keypass bledroid \
               -alias bledroid -keyalg RSA -keysize 2048 -validity 1 \
               -dname "CN=BLE-Droid CI, OU=CI, O=CI, L=CI, S=CI, C=US"
             {
-              echo "KEYSTORE_PATH=$RUNNER_TEMP/release.jks"
+              echo "KEYSTORE_PATH=$RUNNER_TEMP/shared.jks"
               echo "KEYSTORE_PASSWORD=bledroid"
               echo "KEY_ALIAS=bledroid"
               echo "KEY_PASSWORD=bledroid"
             } >> "$GITHUB_ENV"
           fi
 
-      - name: Build release APK
-        run: ./gradlew assembleRelease --no-daemon
+      - name: Build debug and release APK
+        run: ./gradlew assembleDebug assembleRelease --no-daemon
 
-      - name: Collect artifact
+      - name: Collect artifacts
         run: |
           mkdir -p dist
-          apk=$(ls app/build/outputs/apk/release/*.apk | head -n 1)
-          cp "$apk" dist/BleDroid-release.apk
-          sha256sum dist/BleDroid-release.apk > dist/SHA256SUMS
+          debug_apk=$(ls app/build/outputs/apk/debug/*.apk | head -n 1)
+          release_apk=$(ls app/build/outputs/apk/release/*.apk | head -n 1)
+          cp "$debug_apk" dist/BleDroid-debug.apk
+          cp "$release_apk" dist/BleDroid-release.apk
+          sha256sum dist/BleDroid-debug.apk dist/BleDroid-release.apk > dist/SHA256SUMS
 
-      - name: Upload APK
+      - name: Verify debug and release share one signer
+        run: |
+          debug_sig=$(keytool -printcert -jarfile dist/BleDroid-debug.apk | grep -m1 '^SHA256:')
+          release_sig=$(keytool -printcert -jarfile dist/BleDroid-release.apk | grep -m1 '^SHA256:')
+          echo "debug:   $debug_sig"
+          echo "release: $release_sig"
+          if [ -z "$debug_sig" ] || [ "$debug_sig" != "$release_sig" ]; then
+            echo "::error::Debug and release APKs are not signed with the same certificate."
+            exit 1
+          fi
+          echo "Signer matches."
+
+      - name: Upload APKs
         uses: actions/upload-artifact@v4
         with:
           name: BleDroid-APK

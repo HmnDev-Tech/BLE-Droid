@@ -1,0 +1,28 @@
+name: Show and tell
+description: Your setup, results, screenshots, authorized test reports
+title: "[Show]: "
+labels: ["documentation"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What are you showing
+      description: Setup, device pair, what you ran, what happened.
+    validations:
+      required: true
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshots / recordings / logs
+      description: Attach links or paste. Strip MAC addresses if you care about them.
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: Testing was done on devices I am authorized to test
+          required: true
+        - label: No personal data of other people is included
+          required: true

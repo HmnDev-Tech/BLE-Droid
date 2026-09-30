@@ -1,0 +1,21 @@
+name: Announcements
+description: Release notes and project news (maintainers)
+title: "[Announcement]: "
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Type
+      options:
+        - Release
+        - Breaking change
+        - Project news
+    validations:
+      required: true
+  - type: textarea
+    id: body
+    attributes:
+      label: Content
+      description: What changed, what users must do, links to APK artifacts and Wiki pages.
+    validations:
+      required: true
