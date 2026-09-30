@@ -66,8 +66,10 @@ jobs:
 
       - name: Verify debug and release share one signer
         run: |
-          debug_sig=$(keytool -printcert -jarfile dist/BleDroid-debug.apk | grep -m1 '^SHA256:')
-          release_sig=$(keytool -printcert -jarfile dist/BleDroid-release.apk | grep -m1 '^SHA256:')
+          bt=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n 1)
+          apksigner="$ANDROID_HOME/build-tools/$bt/apksigner"
+          debug_sig=$("$apksigner" verify --print-certs dist/BleDroid-debug.apk | awk '/SHA-256 digest/ {print $NF; exit}')
+          release_sig=$("$apksigner" verify --print-certs dist/BleDroid-release.apk | awk '/SHA-256 digest/ {print $NF; exit}')
           echo "debug:   $debug_sig"
           echo "release: $release_sig"
           if [ -z "$debug_sig" ] || [ "$debug_sig" != "$release_sig" ]; then
