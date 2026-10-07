@@ -37,6 +37,8 @@ class BleDroidViewModel(application: Application) : AndroidViewModel(application
     val appleActionGen = AppleActionModalGenerator()
     val swiftPairGen = SwiftPairGenerator()
     val lovespouseGen = LovespouseGenerator()
+    val eddystoneGen = EddystoneGenerator()
+    val ibeaconGen = IBeaconGenerator()
 
     // All advertisement sets by type
     private val _fastPairSets = MutableStateFlow(fastPairGen.generate().toMutableList())
@@ -60,11 +62,36 @@ class BleDroidViewModel(application: Application) : AndroidViewModel(application
     private val _lovespouseSets = MutableStateFlow(lovespouseGen.generate().toMutableList())
     val lovespouseSets = _lovespouseSets.asStateFlow()
 
+    private val _eddystoneSets = MutableStateFlow(eddystoneGen.generate().toMutableList())
+    val eddystoneSets = _eddystoneSets.asStateFlow()
+
+    private val _ibeaconSets = MutableStateFlow(ibeaconGen.generate().toMutableList())
+    val ibeaconSets = _ibeaconSets.asStateFlow()
+
+    private val prefs = application.getSharedPreferences("bledroid_settings", Context.MODE_PRIVATE)
+
+    // Lab Features (persisted, UI-only — no engine changes)
+    private val _labIncludeExperimental = MutableStateFlow(prefs.getBoolean("labIncludeExperimental", true))
+    val labIncludeExperimental = _labIncludeExperimental.asStateFlow()
+
+    private val _labShowRawPayload = MutableStateFlow(prefs.getBoolean("labShowRawPayload", true))
+    val labShowRawPayload = _labShowRawPayload.asStateFlow()
+
+    private val _labHideUnknown = MutableStateFlow(prefs.getBoolean("labHideUnknown", false))
+    val labHideUnknown = _labHideUnknown.asStateFlow()
+
     // Mixed All — combines all generators, shuffled
-    private val _mixAllSets = MutableStateFlow(buildMixAllSets())
+    private val _mixAllSets = MutableStateFlow(
+        buildMixAllSetsStatic(
+            prefs.getBoolean("labIncludeExperimental", true),
+            fastPairGen, samsungBudsGen, samsungWatchGen,
+            appleDeviceGen, appleActionGen, swiftPairGen,
+            lovespouseGen, eddystoneGen, ibeaconGen,
+        )
+    )
     val mixAllSets = _mixAllSets.asStateFlow()
 
-    private fun buildMixAllSets(): MutableList<AdvertisementSet> {
+    private fun buildMixAllSets(includeExperimental: Boolean = _labIncludeExperimental.value): MutableList<AdvertisementSet> {
         val all = mutableListOf<AdvertisementSet>()
         all.addAll(fastPairGen.generate())
         all.addAll(samsungBudsGen.generate())
@@ -73,6 +100,10 @@ class BleDroidViewModel(application: Application) : AndroidViewModel(application
         all.addAll(appleActionGen.generate())
         all.addAll(swiftPairGen.generate())
         all.addAll(lovespouseGen.generate())
+        if (includeExperimental) {
+            all.addAll(eddystoneGen.generate())
+            all.addAll(ibeaconGen.generate())
+        }
         all.shuffle()
         return all
     }
@@ -81,11 +112,29 @@ class BleDroidViewModel(application: Application) : AndroidViewModel(application
         _mixAllSets.value = buildMixAllSets()
     }
 
+    fun setLabIncludeExperimental(include: Boolean) {
+        _labIncludeExperimental.value = include
+        prefs.edit { putBoolean("labIncludeExperimental", include) }
+        _mixAllSets.value = buildMixAllSets(include)
+    }
+
+    fun setLabShowRawPayload(show: Boolean) {
+        _labShowRawPayload.value = show
+        prefs.edit { putBoolean("labShowRawPayload", show) }
+    }
+
+    fun setLabHideUnknown(hide: Boolean) {
+        _labHideUnknown.value = hide
+        prefs.edit { putBoolean("labHideUnknown", hide) }
+    }
+
+    fun applyBurstInterval() {
+        setInterval(20L)
+    }
+
     // Active spam type
     private val _activeSpamType = MutableStateFlow<SpamType?>(null)
     val activeSpamType = _activeSpamType.asStateFlow()
-
-    private val prefs = application.getSharedPreferences("bledroid_settings", Context.MODE_PRIVATE)
 
     // Settings
     private val _intervalMs = MutableStateFlow(prefs.getLong("intervalMs", 100L))
@@ -219,6 +268,8 @@ class BleDroidViewModel(application: Application) : AndroidViewModel(application
             SpamType.SAMSUNG_BUDS, SpamType.SAMSUNG_WATCH -> com.bledroid.ui.navigation.Routes.SAMSUNG
             SpamType.SWIFT_PAIR -> com.bledroid.ui.navigation.Routes.SWIFT_PAIR
             SpamType.LOVESPOUSE_PLAY, SpamType.LOVESPOUSE_STOP -> com.bledroid.ui.navigation.Routes.LOVESPOUSE
+            SpamType.EDDYSTONE_URL, SpamType.EDDYSTONE_UID -> com.bledroid.ui.navigation.Routes.EDDYSTONE
+            SpamType.IBEACON -> com.bledroid.ui.navigation.Routes.IBEACON
             SpamType.MIXED_ALL -> com.bledroid.ui.navigation.Routes.MIX_ALL
         }
 
@@ -283,6 +334,8 @@ class BleDroidViewModel(application: Application) : AndroidViewModel(application
             SpamType.APPLE_ACTION_MODAL -> _appleActionSets
             SpamType.SWIFT_PAIR -> _swiftPairSets
             SpamType.LOVESPOUSE_PLAY, SpamType.LOVESPOUSE_STOP -> _lovespouseSets
+            SpamType.EDDYSTONE_URL, SpamType.EDDYSTONE_UID -> _eddystoneSets
+            SpamType.IBEACON -> _ibeaconSets
             SpamType.MIXED_ALL -> _mixAllSets
         }
     }
@@ -290,4 +343,32 @@ class BleDroidViewModel(application: Application) : AndroidViewModel(application
     override fun onCleared() {
         engine.destroy()
     }
+}
+
+private fun buildMixAllSetsStatic(
+    includeExperimental: Boolean,
+    fastPairGen: FastPairGenerator,
+    samsungBudsGen: SamsungBudsGenerator,
+    samsungWatchGen: SamsungWatchGenerator,
+    appleDeviceGen: AppleDevicePopupGenerator,
+    appleActionGen: AppleActionModalGenerator,
+    swiftPairGen: SwiftPairGenerator,
+    lovespouseGen: LovespouseGenerator,
+    eddystoneGen: EddystoneGenerator,
+    ibeaconGen: IBeaconGenerator,
+): MutableList<AdvertisementSet> {
+    val all = mutableListOf<AdvertisementSet>()
+    all.addAll(fastPairGen.generate())
+    all.addAll(samsungBudsGen.generate())
+    all.addAll(samsungWatchGen.generate())
+    all.addAll(appleDeviceGen.generate())
+    all.addAll(appleActionGen.generate())
+    all.addAll(swiftPairGen.generate())
+    all.addAll(lovespouseGen.generate())
+    if (includeExperimental) {
+        all.addAll(eddystoneGen.generate())
+        all.addAll(ibeaconGen.generate())
+    }
+    all.shuffle()
+    return all
 }

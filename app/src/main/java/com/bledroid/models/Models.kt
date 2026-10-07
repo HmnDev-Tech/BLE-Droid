@@ -12,7 +12,8 @@ enum class AdvertisementTarget(val label: String) {
     IOS("iOS"),
     WINDOWS("Windows"),
     SAMSUNG("Samsung"),
-    LOVESPOUSE("Lovespouse")
+    LOVESPOUSE("Lovespouse"),
+    TRACKER("Tracker")
 }
 
 /**
@@ -27,6 +28,9 @@ enum class SpamType(val label: String) {
     SWIFT_PAIR("Swift Pair"),
     LOVESPOUSE_PLAY("Lovespouse Play"),
     LOVESPOUSE_STOP("Lovespouse Stop"),
+    EDDYSTONE_URL("Eddystone URL"),
+    EDDYSTONE_UID("Eddystone UID"),
+    IBEACON("iBeacon"),
     MIXED_ALL("Mix All")
 }
 

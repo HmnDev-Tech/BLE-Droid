@@ -193,8 +193,11 @@ fun BleDroidMainHost(viewModel: BleDroidViewModel, initialRoute: String? = null)
                     onNavigateToSamsung = { navStack = navStack + Routes.SAMSUNG },
                     onNavigateToSwiftPair = { navStack = navStack + Routes.SWIFT_PAIR },
                     onNavigateToLovespouse = { navStack = navStack + Routes.LOVESPOUSE },
+                    onNavigateToEddystone = { navStack = navStack + Routes.EDDYSTONE },
+                    onNavigateToIbeacon = { navStack = navStack + Routes.IBEACON },
                     onNavigateToMixAll = { navStack = navStack + Routes.MIX_ALL },
                     onNavigateToSpamRadar = { navStack = navStack + Routes.SPAM_RADAR },
+                    onNavigateToLab = { navStack = navStack + Routes.LAB_FEATURES },
                     onNavigateToSettings = { navStack = listOf(Routes.SETTINGS) }, // Swap base
                 )
                 Routes.FAST_PAIR -> FastPairScreen(viewModel = viewModel, onBack = popBackStack)
@@ -202,10 +205,17 @@ fun BleDroidMainHost(viewModel: BleDroidViewModel, initialRoute: String? = null)
                 Routes.SAMSUNG -> SamsungScreen(viewModel = viewModel, onBack = popBackStack)
                 Routes.SWIFT_PAIR -> SwiftPairScreen(viewModel = viewModel, onBack = popBackStack)
                 Routes.LOVESPOUSE -> LovespouseScreen(viewModel = viewModel, onBack = popBackStack)
+                Routes.EDDYSTONE -> EddystoneScreen(viewModel = viewModel, onBack = popBackStack)
+                Routes.IBEACON -> IBeaconScreen(viewModel = viewModel, onBack = popBackStack)
                 Routes.MIX_ALL -> MixAllScreen(viewModel = viewModel, onBack = popBackStack)
                 Routes.SPAM_RADAR -> SpamRadarScreen(viewModel = viewModel, onBack = popBackStack)
+                Routes.LAB_FEATURES -> LabScreen(viewModel = viewModel, onBack = popBackStack)
                 "custom_ble" -> CustomBleScreen(viewModel = viewModel)
-                Routes.SETTINGS -> SettingsScreen(viewModel = viewModel, onBack = popBackStack)
+                Routes.SETTINGS -> SettingsScreen(
+                    viewModel = viewModel,
+                    onBack = popBackStack,
+                    onNavigateToLab = { navStack = navStack + Routes.LAB_FEATURES },
+                )
             }
         }
 

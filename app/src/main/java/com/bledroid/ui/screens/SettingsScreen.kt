@@ -14,10 +14,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.animation.*
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import com.bledroid.ui.BleDroidViewModel
 import com.bledroid.ui.ThemeColor
 import com.bledroid.ui.ThemeMode
+
+const val BLE_DROID_GITHUB_URL = "https://github.com/HmnDev-Tech/BLE-Droid"
+const val BLE_DROID_TELEGRAM_URL = "https://t.me/hmndevtech"
 
 @Composable
 fun SettingsGroupItem(
@@ -48,7 +52,8 @@ fun SettingsGroupItem(
     Surface(
         shape = shape,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        onClick = { onClick?.invoke() },
+        onClick = onClick ?: {},
+        enabled = onClick != null,
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -85,6 +90,7 @@ fun SettingsGroupHeader(title: String) {
 fun SettingsScreen(
     viewModel: BleDroidViewModel,
     onBack: () -> Unit,
+    onNavigateToLab: () -> Unit = {},
 ) {
     val intervalMs by viewModel.intervalMs.collectAsState()
     val txPower by viewModel.txPower.collectAsState()
@@ -169,9 +175,8 @@ fun SettingsScreen(
                             Column(modifier = Modifier.fillMaxWidth()) {
                                 Slider(
                                     value = intervalMs.toFloat(),
-                                    onValueChange = { viewModel.setInterval(it.toLong()) },
+                                    onValueChange = { viewModel.setInterval(it.toLong().coerceIn(20L, 1000L)) },
                                     valueRange = 20f..1000f,
-                                    steps = 19,
                                 )
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -192,7 +197,7 @@ fun SettingsScreen(
                 isFirst = false,
                 isLast = true,
                 bottomContent = {
-                    val powerLabels = listOf("ULow", "Low", "Medium", "High")
+                    val powerLabels = listOf("Ultra Low", "Low", "Medium", "High")
                     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                         powerLabels.forEachIndexed { index, label ->
                             SegmentedButton(
@@ -310,10 +315,48 @@ fun SettingsScreen(
             SettingsGroupHeader("About")
 
             SettingsGroupItem(
-                title = "About BleDroid v1.5.0",
-                subtitle = "BLE advertisement spam tool with Material 3 Expressive design. Supports Google Fast Pair, Apple Continuity, Samsung Easy Setup, Windows Swift Pair, Lovespouse protocols. New: Mix All Spam mode & built-in Spam Radar detector.",
+                title = "About BleDroid v1.6.0",
+                subtitle = "BLE advertisement spam tool with Material 3 Expressive design. Supports Google Fast Pair, Apple Continuity, Samsung Easy Setup, Windows Swift Pair, Lovespouse, Eddystone, iBeacon. New: Mix All Spam mode, Spam Radar detector & Lab Features.",
                 isFirst = true,
+                isLast = false,
+            )
+
+            val uriHandler = LocalUriHandler.current
+            SettingsGroupItem(
+                title = "GitHub Repository",
+                subtitle = BLE_DROID_GITHUB_URL,
+                isFirst = false,
+                isLast = false,
+                onClick = { uriHandler.openUri(BLE_DROID_GITHUB_URL) },
+                trailing = {
+                    IconButton(onClick = { uriHandler.openUri(BLE_DROID_GITHUB_URL) }) {
+                        Icon(Icons.Default.Code, "Open GitHub")
+                    }
+                }
+            )
+
+            SettingsGroupItem(
+                title = "Telegram Channel",
+                subtitle = "t.me/hmndevtech",
+                isFirst = false,
+                isLast = false,
+                onClick = { uriHandler.openUri(BLE_DROID_TELEGRAM_URL) },
+                trailing = {
+                    IconButton(onClick = { uriHandler.openUri(BLE_DROID_TELEGRAM_URL) }) {
+                        Icon(Icons.Default.Send, "Open Telegram")
+                    }
+                }
+            )
+
+            SettingsGroupItem(
+                title = "Lab Features",
+                subtitle = "Experimental toggles — burst mode, radar filters",
+                isFirst = false,
                 isLast = true,
+                onClick = onNavigateToLab,
+                trailing = {
+                    Icon(Icons.Default.Science, "Lab Features")
+                }
             )
 
             Spacer(Modifier.height(16.dp))

@@ -2,9 +2,11 @@ package com.bledroid.ui.screens
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -34,6 +36,8 @@ private fun getSpamTypeColor(type: String): Color = when {
     type.contains("Samsung") -> Color(0xFF2196F3)
     type.contains("Swift Pair") -> Color(0xFF00BCD4)
     type.contains("Lovespouse") -> Color(0xFFE91E63)
+    type.contains("Eddystone") -> Color(0xFF9C27B0)
+    type.contains("iBeacon") -> Color(0xFFFF9800)
     type.contains("Unknown") -> Color(0xFF9E9E9E)
     else -> Color(0xFFFF9800)
 }
@@ -44,6 +48,8 @@ private fun getSpamTypeIcon(type: String) = when {
     type.contains("Samsung") -> Icons.Default.Watch
     type.contains("Swift Pair") -> Icons.Default.DesktopWindows
     type.contains("Lovespouse") -> Icons.Default.Favorite
+    type.contains("Eddystone") -> Icons.Default.Link
+    type.contains("iBeacon") -> Icons.Default.LocationOn
     else -> Icons.Default.DeviceUnknown
 }
 
@@ -63,6 +69,13 @@ fun SpamRadarScreen(
 ) {
     val isScanning by viewModel.engine.isScanning.collectAsState()
     val scanResults by viewModel.engine.scanResults.collectAsState()
+    val showRawPayload by viewModel.labShowRawPayload.collectAsState()
+    val hideUnknown by viewModel.labHideUnknown.collectAsState()
+
+    val visibleResults = remember(scanResults, hideUnknown) {
+        if (hideUnknown) scanResults.filter { !it.detectedType.contains("Unknown") }
+        else scanResults
+    }
 
     // Radar pulse animation
     val infiniteTransition = rememberInfiniteTransition(label = "radar")
@@ -82,13 +95,24 @@ fun SpamRadarScreen(
                 title = {
                     Column {
                         Text("Spam Radar", fontWeight = FontWeight.Bold)
-                        Text(
-                            text = if (isScanning) "🔍 Scanning… ${scanResults.size} devices"
-                            else "Ready to scan",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (isScanning) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (isScanning) {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp),
+                                    tint = MaterialTheme.colorScheme.primary,
+                                )
+                                Spacer(Modifier.width(4.dp))
+                            }
+                            Text(
+                                text = if (isScanning) "Scanning - ${visibleResults.size} devices"
+                                else "Ready to scan",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (isScanning) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 },
                 navigationIcon = {
@@ -165,16 +189,17 @@ fun SpamRadarScreen(
                 }
             }
 
-            // Type legend
-            if (scanResults.isNotEmpty()) {
-                val typeGroups = scanResults.groupBy { it.detectedType }
+            // Type legend (horizontally scrollable — fixes overflow on small screens)
+            if (visibleResults.isNotEmpty()) {
+                val typeGroups = visibleResults.groupBy { it.detectedType }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
                         .padding(horizontal = 16.dp, vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    typeGroups.keys.take(5).forEach { type ->
+                    typeGroups.keys.take(8).forEach { type ->
                         val count = typeGroups[type]?.size ?: 0
                         Surface(
                             shape = RoundedCornerShape(12.dp),
@@ -192,10 +217,11 @@ fun SpamRadarScreen(
                                 )
                                 Spacer(Modifier.width(4.dp))
                                 Text(
-                                    text = "$count",
+                                    text = "$type: $count",
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = getSpamTypeColor(type),
+                                    maxLines = 1,
                                 )
                             }
                         }
@@ -211,11 +237,11 @@ fun SpamRadarScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                items(scanResults, key = { it.deviceAddress }) { entry ->
-                    SpamRadarEntryCard(entry)
+                items(visibleResults, key = { it.deviceAddress }) { entry ->
+                    SpamRadarEntryCard(entry, showRawPayload)
                 }
 
-                if (scanResults.isEmpty() && isScanning) {
+                if (visibleResults.isEmpty() && isScanning) {
                     item {
                         Box(
                             modifier = Modifier
@@ -230,7 +256,7 @@ fun SpamRadarScreen(
                                 )
                                 Spacer(Modifier.height(16.dp))
                                 Text(
-                                    "Listening for BLE advertisements…",
+                                    "Listening for BLE advertisements...",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -239,7 +265,7 @@ fun SpamRadarScreen(
                     }
                 }
 
-                if (!isScanning && scanResults.isEmpty()) {
+                if (!isScanning && visibleResults.isEmpty()) {
                     item {
                         Box(
                             modifier = Modifier
@@ -270,7 +296,7 @@ fun SpamRadarScreen(
 }
 
 @Composable
-private fun SpamRadarEntryCard(entry: SpamRadarEntry) {
+private fun SpamRadarEntryCard(entry: SpamRadarEntry, showRawPayload: Boolean = true) {
     val typeColor = getSpamTypeColor(entry.detectedType)
     val signalLevel = rssiToSignalLevel(entry.rssi)
     val timeFormat = remember { SimpleDateFormat("HH:mm:ss", Locale.getDefault()) }
@@ -334,6 +360,16 @@ private fun SpamRadarEntryCard(entry: SpamRadarEntry) {
                         style = MaterialTheme.typography.labelSmall,
                         fontFamily = FontFamily.Monospace,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    )
+                }
+                if (showRawPayload && entry.rawPayloadHex.isNotEmpty()) {
+                    Text(
+                        text = entry.rawPayloadHex.take(64),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontFamily = FontFamily.Monospace,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }

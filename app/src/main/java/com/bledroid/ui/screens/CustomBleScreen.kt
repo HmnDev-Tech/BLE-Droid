@@ -135,7 +135,7 @@ fun CustomBleScreen(viewModel: BleDroidViewModel) {
                     shape = MaterialTheme.shapes.medium,
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
                     singleLine = true,
-                    supportingText = { Text("Fast Pair: 0000fe2c…  Samsung: 0000fd5a…") },
+                    supportingText = { Text("Fast Pair: 0000fe2c...  Samsung: 0000fd5a...") },
                 )
                 // Service Data HEX
                 OutlinedTextField(
@@ -287,7 +287,16 @@ fun CustomBleStats(packetsSentProvider: () -> Long) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("📡 Broadcasting", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.WifiTethering,
+                    contentDescription = "Broadcasting",
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+                Spacer(Modifier.width(6.dp))
+                Text("Broadcasting", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+            }
             Text("${packetsSentProvider()} pkts", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
         }
     }

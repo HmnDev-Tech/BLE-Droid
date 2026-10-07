@@ -44,7 +44,7 @@ class LovespouseGenerator : SpamGenerator {
         val playSets = plays.map { (hexId, modeName) ->
             val payload = lovespousePrefix + hexId + lovespousePlayAppendix
             AdvertisementSet(
-                title = "▶ $modeName",
+                title = "Play - $modeName",
                 target = AdvertisementTarget.LOVESPOUSE,
                 type = SpamType.LOVESPOUSE_PLAY,
                 manufacturerData = ManufacturerData(ManufacturerIds.TYPO_PRODUCTS, HexUtils.decodeHex(payload)),
@@ -54,7 +54,7 @@ class LovespouseGenerator : SpamGenerator {
         val stopSets = plays.map { (hexId, modeName) ->
             val payload = lovespousePrefix + hexId + lovespouseStopAppendix
             AdvertisementSet(
-                title = "⏹ Stop $modeName",
+                title = "Stop - $modeName",
                 target = AdvertisementTarget.LOVESPOUSE,
                 type = SpamType.LOVESPOUSE_STOP,
                 manufacturerData = ManufacturerData(ManufacturerIds.TYPO_PRODUCTS, HexUtils.decodeHex(payload)),

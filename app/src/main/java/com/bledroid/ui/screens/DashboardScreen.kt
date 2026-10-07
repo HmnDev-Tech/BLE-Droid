@@ -27,8 +27,11 @@ fun DashboardScreen(
     onNavigateToSamsung: () -> Unit,
     onNavigateToSwiftPair: () -> Unit,
     onNavigateToLovespouse: () -> Unit,
+    onNavigateToEddystone: () -> Unit,
+    onNavigateToIbeacon: () -> Unit,
     onNavigateToMixAll: () -> Unit,
     onNavigateToSpamRadar: () -> Unit,
+    onNavigateToLab: () -> Unit,
     onNavigateToSettings: () -> Unit,
 ) {
     val isRunning by viewModel.engine.isRunning.collectAsState()
@@ -42,6 +45,8 @@ fun DashboardScreen(
     val samsungWatchSets by viewModel.samsungWatchSets.collectAsState()
     val swiftPairSets by viewModel.swiftPairSets.collectAsState()
     val lovespouseSets by viewModel.lovespouseSets.collectAsState()
+    val eddystoneSets by viewModel.eddystoneSets.collectAsState()
+    val ibeaconSets by viewModel.ibeaconSets.collectAsState()
     val mixAllSets by viewModel.mixAllSets.collectAsState()
     val isScanning by viewModel.engine.isScanning.collectAsState()
     val radarResults by viewModel.engine.scanResults.collectAsState()
@@ -49,7 +54,7 @@ fun DashboardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-        title = {
+                title = {
                     Column {
                         Text(
                             "BleDroid",
@@ -58,12 +63,22 @@ fun DashboardScreen(
                             fontStyle = FontStyle.Italic,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
-                        Text(
-                            text = if (isRunning) "📡 Spamming Active" else "Ready to spam",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (isRunning) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = if (isRunning) Icons.Default.WifiTethering else Icons.Default.Bluetooth,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = if (isRunning) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text = if (isRunning) "Spamming Active" else "Ready to spam",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (isRunning) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 },
                 actions = {
@@ -118,7 +133,7 @@ fun DashboardScreen(
                         }
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = activeType?.label ?: "—",
+                                text = activeType?.label ?: "Idle",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.tertiary,
@@ -206,6 +221,24 @@ fun DashboardScreen(
                 onClick = onNavigateToLovespouse,
             )
 
+            SpamCategoryCard(
+                title = "Eddystone",
+                subtitle = "Google beacons — URL & UID frames",
+                icon = Icons.Default.Link,
+                deviceCount = eddystoneSets.size,
+                isActive = activeType == com.bledroid.models.SpamType.EDDYSTONE_URL || activeType == com.bledroid.models.SpamType.EDDYSTONE_UID,
+                onClick = onNavigateToEddystone,
+            )
+
+            SpamCategoryCard(
+                title = "iBeacon",
+                subtitle = "Apple proximity beacons — UUID/major/minor",
+                icon = Icons.Default.LocationOn,
+                deviceCount = ibeaconSets.size,
+                isActive = activeType == com.bledroid.models.SpamType.IBEACON,
+                onClick = onNavigateToIbeacon,
+            )
+
             // Tools section
             Spacer(Modifier.height(4.dp))
             Text(
@@ -223,6 +256,15 @@ fun DashboardScreen(
                 deviceCount = radarResults.size,
                 isActive = isScanning,
                 onClick = onNavigateToSpamRadar,
+            )
+
+            SpamCategoryCard(
+                title = "Lab Features",
+                subtitle = "Experimental toggles — burst mode, radar filters",
+                icon = Icons.Default.Science,
+                deviceCount = 0,
+                isActive = false,
+                onClick = onNavigateToLab,
             )
 
             Spacer(Modifier.height(24.dp))

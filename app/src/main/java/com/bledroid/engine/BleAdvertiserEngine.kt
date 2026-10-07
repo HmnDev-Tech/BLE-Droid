@@ -23,23 +23,36 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 object SpamClassifier {
     private val FAST_PAIR_UUID = ParcelUuid.fromString("0000FE2C-0000-1000-8000-00805F9B34FB")
+    private val EDDYSTONE_UUID = ParcelUuid.fromString("0000FEAA-0000-1000-8000-00805F9B34FB")
 
     fun classify(result: ScanResult): String {
         val record = result.scanRecord ?: return "Unknown"
 
-        // Check service UUIDs for Fast Pair
+        // Check service UUIDs for Fast Pair / Eddystone
         val serviceUuids = record.serviceUuids
         if (serviceUuids != null) {
             for (uuid in serviceUuids) {
                 if (uuid == FAST_PAIR_UUID) return "Fast Pair"
+                if (uuid == EDDYSTONE_UUID) return "Eddystone"
             }
         }
 
-        // Check service data for Fast Pair
+        // Check service data for Fast Pair / Eddystone
         val serviceData = record.serviceData
         if (serviceData != null) {
             for (entry in serviceData) {
                 if (entry.key == FAST_PAIR_UUID) return "Fast Pair"
+                if (entry.key == EDDYSTONE_UUID) {
+                    val d = entry.value
+                    if (d != null && d.isNotEmpty()) {
+                        return when (d[0].toInt() and 0xFF) {
+                            0x10 -> "Eddystone URL"
+                            0x00 -> "Eddystone UID"
+                            else -> "Eddystone"
+                        }
+                    }
+                    return "Eddystone"
+                }
             }
         }
 
@@ -53,6 +66,10 @@ object SpamClassifier {
                 when (mfId) {
                     76 -> { // Apple 0x004C
                         if (data != null && data.isNotEmpty()) {
+                            // iBeacon: 02 15 + UUID(16) + major(2) + minor(2) + tx(1)
+                            if (data.size >= 23 && (data[0].toInt() and 0xFF) == 0x02 && (data[1].toInt() and 0xFF) == 0x15) {
+                                return "iBeacon"
+                            }
                             return when (data[0].toInt() and 0xFF) {
                                 0x0F -> "Apple Action Modal"
                                 0x05, 0x07, 0x08, 0x09, 0x10 -> "Apple Device Popup"

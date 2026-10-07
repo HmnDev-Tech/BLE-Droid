@@ -243,11 +243,20 @@ fun SpamControlBar(
             }
 
             if (isRunning) {
-                Text(
-                    text = "📡 ${packetsSentProvider()} pkts",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.WifiTethering,
+                        contentDescription = "Broadcasting",
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = "${packetsSentProvider()} pkts",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
             }
 
             // M3 Expressive ButtonShapes squish button:
@@ -312,7 +321,7 @@ fun DeviceListWithControls(
                 value = searchQuery,
                 onValueChange = onSearchChange,
                 modifier = Modifier.weight(1f),
-                placeholder = { Text("Search devices…") },
+                placeholder = { Text("Search devices...") },
                 leadingIcon = { Icon(Icons.Default.Search, null) },
                 singleLine = true,
                 shape = MaterialTheme.shapes.medium,
