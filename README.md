@@ -2,7 +2,7 @@
 
 Android BLE advertisement spam and detection tool. Kotlin, Jetpack Compose, Material 3 Expressive.
 
-**Version:** 1.6.0 · **Min SDK:** 26 (Android 8.0) · **Target SDK:** 36 · **License:** MIT
+**Version:** 1.6.1 · **Min SDK:** 26 (Android 8.0) · **Target SDK:** 36 · **License:** MIT
 
 ## What it does
 
@@ -46,6 +46,8 @@ Not every phone supports BLE advertising. Some vendors lock the advertiser; the 
 CI: every push to `master` runs `.github/workflows/build-apk.yml` and uploads APKs as workflow artifacts.
 
 For signed release builds set env vars: `KEYSTORE_PATH`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
+
+CI-signed release APKs all share one repo-pinned certificate (`ci/bledroid-ci.jks`), so new versions install as updates without uninstall. One-time exception: builds ≤ 1.6.0 were signed with throwaway keys, so moving to 1.6.1+ requires a single manual uninstall.
 
 ## Usage
 

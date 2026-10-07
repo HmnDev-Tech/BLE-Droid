@@ -27,12 +27,15 @@ class EddystoneGenerator : SpamGenerator {
         Triple("Eddystone URL — YouTube", "03696F757475626505", "EE"),
         Triple("Eddystone URL — GitHub", "0367697468756207", "EE"),
         Triple("Eddystone URL — BLE-Droid", "03424C452D44726F696407", "F0"),
-    ).map { (title, body, tx) ->
+    ).mapNotNull { (title, body, tx) ->
+        // Guard: a malformed hex entry must never crash app startup (ViewModel init)
+        val payload = runCatching { urlPayload(body, tx) }.getOrNull()
+            ?: return@mapNotNull null
         AdvertisementSet(
             title = title,
             target = AdvertisementTarget.ANDROID,
             type = SpamType.EDDYSTONE_URL,
-            serviceData = ServiceData(eddystoneUuid, urlPayload(body, tx)),
+            serviceData = ServiceData(eddystoneUuid, payload),
             includeTxPower = false,
         )
     }
@@ -42,12 +45,15 @@ class EddystoneGenerator : SpamGenerator {
         "00EE0102030405060708090A0B0C0D0E0F1011121314" to "Eddystone UID — Demo Tag 1",
         "00EEAABBCCDDEEFF00112233445566778899001122" to "Eddystone UID — Demo Tag 2",
         "00F000112233445566778899AABBCCDDEEFF000001" to "Eddystone UID — Demo Tag 3",
-    ).map { (hex, title) ->
+    ).mapNotNull { (hex, title) ->
+        // Guard: a malformed hex entry must never crash app startup (ViewModel init)
+        val payload = runCatching { HexUtils.decodeHex(hex) }.getOrNull()
+            ?: return@mapNotNull null
         AdvertisementSet(
             title = title,
             target = AdvertisementTarget.TRACKER,
             type = SpamType.EDDYSTONE_UID,
-            serviceData = ServiceData(eddystoneUuid, HexUtils.decodeHex(hex)),
+            serviceData = ServiceData(eddystoneUuid, payload),
             includeTxPower = false,
         )
     }

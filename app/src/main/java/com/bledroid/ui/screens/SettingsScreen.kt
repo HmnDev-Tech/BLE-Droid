@@ -315,7 +315,7 @@ fun SettingsScreen(
             SettingsGroupHeader("About")
 
             SettingsGroupItem(
-                title = "About BleDroid v1.6.0",
+                title = "About BleDroid v1.6.1",
                 subtitle = "BLE advertisement spam tool with Material 3 Expressive design. Supports Google Fast Pair, Apple Continuity, Samsung Easy Setup, Windows Swift Pair, Lovespouse, Eddystone, iBeacon. New: Mix All Spam mode, Spam Radar detector & Lab Features.",
                 isFirst = true,
                 isLast = false,

@@ -39,13 +39,11 @@ jobs:
               echo "KEY_PASSWORD=$KEY_PASS"
             } >> "$GITHUB_ENV"
           else
-            echo "::warning::KEYSTORE_B64 secret is not set - signing with a throwaway key. Artifacts from this run will NOT be updatable by future runs. Set KEYSTORE_B64/KEYSTORE_PASSWORD/KEY_ALIAS/KEY_PASSWORD secrets for a stable signature."
-            keytool -genkeypair -keystore "$RUNNER_TEMP/shared.jks" \
-              -storepass bledroid -keypass bledroid \
-              -alias bledroid -keyalg RSA -keysize 2048 -validity 1 \
-              -dname "CN=BLE-Droid CI, OU=CI, O=CI, L=CI, S=CI, C=US"
+            # Stable repo-pinned CI key: every CI build shares one certificate,
+            # so release APKs install as updates without uninstall.
+            # (Private KEYSTORE_B64 secret still takes precedence when set.)
             {
-              echo "KEYSTORE_PATH=$RUNNER_TEMP/shared.jks"
+              echo "KEYSTORE_PATH=$GITHUB_WORKSPACE/ci/bledroid-ci.jks"
               echo "KEYSTORE_PASSWORD=bledroid"
               echo "KEY_ALIAS=bledroid"
               echo "KEY_PASSWORD=bledroid"
